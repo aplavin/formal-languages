@@ -8,7 +8,7 @@ module NFA
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import Data.Maybe (isNothing, fromJust)
+import Data.Maybe
 
 import qualified DFA
 
@@ -24,9 +24,7 @@ data NFA s a = NFA
 
 move :: (Ord s, Ord a) => s -> Maybe a -> NFA s a -> Set.Set s
 move state alpha nfa =
-    if isNothing result
-        then Set.empty
-        else fromJust result
+    fromMaybe Set.empty result
     where result = Map.lookup (state, alpha) $ delta nfa
 
 moveWithAlpha :: (Ord s, Ord a) => s -> a -> NFA s a -> Set.Set s
@@ -37,11 +35,11 @@ moveWithNothing state = move state Nothing
 
 epsilonClosure :: (Ord s, Ord a) => Set.Set s -> NFA s a -> Set.Set s
 epsilonClosure states nfa = Set.fold appendStates states states
-    where appendStates = \s acc -> Set.union acc $ moveWithNothing s nfa
+    where appendStates s acc = Set.union acc $ moveWithNothing s nfa
 
 trans :: (Ord s, Ord a) => Set.Set s -> a -> NFA s a -> Set.Set s
 trans states alpha nfa = Set.fold appendStates Set.empty states
-    where appendStates = \s acc -> Set.union acc $ move s
+    where appendStates s acc = Set.union acc $ move s
           move s = epsilonClosure (moveWithAlpha s alpha nfa) nfa
 
 run :: (Ord s, Ord a) => [a] -> NFA s a -> Set.Set s
@@ -55,7 +53,7 @@ accept input nfa = not $ Set.null $ Set.intersection final $ acceptStates nfa
 
 powerset :: (Ord s) => Set.Set s -> Set.Set (Set.Set s)
 powerset set = Set.fold union emptySet set
-    where union = \s acc -> Set.union acc $ Set.map (Set.insert s) acc
+    where union s acc = Set.union acc $ Set.map (Set.insert s) acc
           emptySet = Set.singleton Set.empty
 
 toDFA :: (Ord s, Ord a) => NFA s a -> DFA.DFA (Set.Set s) a
@@ -68,8 +66,8 @@ toDFA nfa = DFA.DFA
     where states' = powerset $ states nfa
           sigma' = sigma nfa
           delta' = Map.fromList $ foldl run' [] stateList
-              where run' = \acc s -> foldl (\acc' a -> trans' s a : acc') acc sigmaList
-                    trans' = \state alpha -> ((state, alpha), trans state alpha nfa)
+              where run' acc s = foldl (\acc' a -> trans' s a : acc') acc sigmaList
+                    trans' state alpha = ((state, alpha), trans state alpha nfa)
                     sigmaList = Set.toList sigma'
                     stateList = Set.toList states'
           starts = epsilonClosure (Set.singleton $ startState nfa) nfa

@@ -1,120 +1,59 @@
 import System.IO
 import Text.Regex.Posix
-import Text.Parsec hiding (space, spaces)
-import Text.Parsec.String
-import qualified Data.List.Split as Split
+import Text.Printf
 import Data.List
+import Data.List.Utils
+import Data.Tuple.Curry
 import Automaton
+import FileParser
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified DFA
 import qualified NFA
 
-data Settings = Settings {
-	numWordsGen :: Int,
-	regexp :: String
-} deriving (Show)
+genNth _ 0 _ = ""
+genNth alphabet len n = genNth alphabet (len-1) q ++ [alphabet !! r]
+	where (q, r) = n `quotRem` length alphabet
+	
+gen alphabet = [genNth alphabet len n | len <- [0..], n <- [0..length alphabet ^ len - 1]]
 
-space :: Parser (Char)
-space = oneOf " \t"
+input = "automata.txt"
+output = "result.txt"
 
-spaces :: Parser ()
-spaces = skipMany space
+createOutput = writeFile output ""
 
-settingsP :: Parser (Settings)
-settingsP = do
-{
-	manyTill anyChar space;
-	w_cnt <- many1 digit;
-	manyTill anyChar newline;
-	commentsP;
-	manyTill anyChar (char ':');
-	space;
-	regexp <- manyTill anyChar newline;
-	return Settings{ numWordsGen = read w_cnt, regexp = regexp };
-}
+outputLine line = appendFile output (line ++ "\n")
+outputLineS val = appendFile output (show val ++ "\n")
 
-emptyLine :: Parser ()
-emptyLine = newline >> return()
-
-commentsP :: Parser ()
-commentsP = do
-{
-	skipMany (do {
-		char '#';
-		manyTill anyChar newline;
-		return();
-	}
-	<|>	emptyLine);
-}
-
-data StateFlag = None | Starting | Accepting deriving (Show, Eq)
-data StateLine = StateLine {
-	 fState :: String
-	,fStateFlag :: StateFlag
-	,tStates :: [[String]]
-} deriving Show
-
-isStarting StateLine{fStateFlag = Starting} = True
-isStarting _ = False
-
-isAccepting StateLine{fStateFlag = Accepting} = True
-isAccepting _ = False
-
-stateFlagP :: Parser (String, StateFlag)
-stateFlagP = do
-{
-	spaces;
-	parsed <-
-		try (do{ char '>'; spaces; state <- manyTill anyChar space; return (state, Starting)})
-	<|>	try (do{ state <- manyTill anyChar space; oneOf "F>"; return (state, Accepting)})
-	<|>	do{ state <- manyTill anyChar space; return (state, None)};
-	return parsed
-}
-
-stateLineP :: Parser (StateLine)
-stateLineP = do
-{
-	(state, flag) <- stateFlagP;
-	spaces;
-	statesStr <- manyTill anyChar newline;
-	return StateLine {
-		 fState = state
-		,fStateFlag = flag
-		,tStates = map (Split.splitOn ",") (Split.splitOn "\t" statesStr)
-	};
-}
-
-automatonP :: Parser (Automaton)
-automatonP = do
-{
-	name <- manyTill anyChar newline;
-	alphabet <- manyTill (spaces >> anyChar) newline;
-	stateLines <- manyTill stateLineP emptyLine;
-	return Automaton {
-		 name = name
-		,alphabet = alphabet
-		,states = map fState stateLines
-		,startStates = map fState $ filter isStarting stateLines
-		,acceptStates = map fState $ filter isAccepting stateLines
-		,delta = [(fState sl, ch, states) | sl <- stateLines, (ch, states) <- zip alphabet (tStates sl)]
-	};
-}
-
-automataP :: Parser (Settings, Automaton)
-automataP = do
-{
-	commentsP;
-	sets <- settingsP;
-	commentsP;
-	string "Automata:";
-	commentsP;
-	a <- automatonP;
-	return (sets, a);
-}
+automatonRepr settings a = 
+	unlines $ intersperse (replicate 80 '-') $ [
+		 "== Automaton " ++ name a ++ " =="
+		,"- Representations -"]
+		++ map reprToString (representations a)
+		++ map (uncurryN formatWords) [
+			 ("Accepted", "A", accepted)
+			,("Accepted", "REGEX", acceptedRegex)
+			,("Rejected", "A", rejected)
+			,("Rejected", "REGEX", rejectedRegex)
+			,("Diff", "A \\ REGEX", acceptedNotRegex)
+			,("Diff", "REGEX \\ A", rejectedAndRegex)]
+	where
+		reprToString (name, text) = intercalate "\n" [name ++ ":", replicate (length name + 1) '-', text]
+		
+		generated = take (numWordsGen settings) (gen $ alphabet a)
+		replaceEps = map (\w -> if w == "" then "\\eps" else w)
+		
+		accepted = replaceEps $ filter (isAccepted a) generated
+		rejected = replaceEps $ filter (not.isAccepted a) generated
+		acceptedRegex = replaceEps $ filter (\w -> (w =~ (regexp settings) :: Bool)) generated
+		rejectedRegex = replaceEps $ filter (\w -> not (w =~ (regexp settings) :: Bool)) generated
+		
+		acceptedNotRegex = replaceEps $ filter (\w -> isAccepted a w && not (w =~ (regexp settings) :: Bool)) generated
+		rejectedAndRegex = replaceEps $ filter (\w -> not (isAccepted a w) && (w =~ (regexp settings) :: Bool)) generated
+		
+		formatWords acc source words = printf "%s words [%s] (%d of first %d):\n%s" acc source (length words) (numWordsGen settings) (if (not.null) words then intercalate ", " words else "None")
 
 main = do
-	pff <- parseFromFile automataP "automata.txt"
-	putStrLn $ case pff of
-		Right res -> show $ snd res
-		Left err -> show err
+	(settings, automata) <- parseFile input
+	createOutput
+	outputLine $ unlines $ intersperse (replicate 80 '=') $ map (automatonRepr settings) automata
