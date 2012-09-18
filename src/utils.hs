@@ -8,6 +8,13 @@ import Data.List
 
 thrd (_, _, a) = a
 
+cartesianProduct cnt xs = sequence (replicate cnt xs)
+
+count x xs = length $ filter (==x) xs
+
+allEqual [] = True
+allEqual (x:xs) = all (==x) xs
+
 justifyRight n c s = replicate (n - length s) c ++ s
 
 justifyLeft n c s = replicate (n - length s) c ++ s

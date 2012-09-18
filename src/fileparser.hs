@@ -1,5 +1,7 @@
 module FileParser(parseFile, Settings(..)) where
 
+import Data.List
+import Data.Ord
 import Text.Parsec hiding (space, spaces)
 import Text.Parsec.String
 import qualified Data.List.Split as Split
@@ -14,12 +16,10 @@ data Settings = Settings {
 -- | Parse specified file
 parseFile :: FilePath -> IO (Settings, [LangDef])
 parseFile file = do
-{
-	pff <- parseFromFile fileP file;
+	pff <- parseFromFile fileP file
 	case pff of
 		Right res -> return res
 		Left err -> error $ show err
-}
 
 -- | Parser of the whole file
 fileP :: Parser (Settings, [LangDef])
@@ -31,7 +31,7 @@ fileP = do
 	commentsP
 	a <- many (commentsP >> langDefP)
 	commentsP
-	return (sets, a)
+	return (sets, sortBy (comparing name) a)
 
 -- | Parser of settings lines
 settingsP :: Parser (Settings)
@@ -46,7 +46,7 @@ settingsP = do
 -- | Parser of any language definition
 langDefP :: Parser (LangDef)
 langDefP = do
-	res <- try automatonP <|> try regexpP
+	res <- automatonP <|> regexpP
 	return res
 
 -- | Parser of a regexp
@@ -54,7 +54,7 @@ regexpP :: Parser (LangDef)
 regexpP = do
 	char 'R'
 	name <- line
-	many emptyLine
+	skipMany emptyLine
 	value <- line
 	return RegExp{name='R':name, value=value}
 
@@ -64,7 +64,7 @@ automatonP = do
 	char 'A'
 	name <- manyTill anyChar newline
 	alphabet <- manyTill (spaces >> anyChar) newline
-	stateLines <- manyTill stateLineP emptyLine
+	stateLines <- manyTill stateLineP (emptyLine <|> eof)
 	return Automaton {
 		 name = 'A':name
 		,a_alphabet = filter (/= 'e') alphabet
@@ -89,16 +89,14 @@ isAccepting StateLine{fStateFlags = flags} = (Accepting `elem` flags)
 -- | Parser of a single state line in table-defined FA
 stateLineP :: Parser (StateLine)
 stateLineP = do
-{
-	(state, flags) <- stateFlagP;
-	spaces;
-	statesStr <- manyTill anyChar newline;
+	(state, flags) <- stateFlagP
+	spaces
+	statesStr <- manyTill anyChar newline
 	return StateLine {
 		 fState = state
 		,fStateFlags = flags
 		,tStates = map (Split.splitOn ",") (Split.splitOn "\t" statesStr)
-	};
-}
+	}
 
 -- | Parser of a state name and its flag
 stateFlagP :: Parser (String, [StateFlag])
@@ -122,7 +120,7 @@ commentsP = do
 		manyTill anyChar newline;
 		return();
 	}
-	<|>	emptyLine);
+	<|>	emptyLine)
 }
 
 -- | Helper parser: skip many spaces (space character or tab); Redefines that one from Parsec

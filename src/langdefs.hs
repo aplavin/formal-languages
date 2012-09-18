@@ -33,7 +33,7 @@ accepted r@(RegExp{}) w = w =~ value r :: Bool
 representations a@(Automaton{}) = zip ["Haskell definition", "Table", "LaTeX table"] (map ($ a) [toHaskellDef, toTable, toLatexTable])
 representations r@(RegExp{}) = [("Haskell regexp", value r)]
 
-isDFA a = (all id $ map (\(_, _, states) -> length states <= 1) $ delta a) && (length (startStates a) == 1)
+isDFA a = all (\(_, c, states) -> isJust c && length states <= 1) (delta a) && (length (startStates a) == 1)
 
 getDFA a = if not (isDFA a) then error "Automaton is not DFA" else DFA.DFA
     { DFA.states = Set.fromList (states a)

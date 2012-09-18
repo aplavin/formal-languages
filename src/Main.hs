@@ -29,27 +29,40 @@ createOutput = writeFile output ""
 
 outputLine line = appendFile output (line ++ "\n")
 
-
+-- | Representation of LangDef in pretty format, with headers and so on
 langDefRepr ldef = justifyCenter width '-' (" " ++ name ldef ++ " ") ++ "\n" ++ intercalate "\n" [printf "%s\n%s\n%s" (fmtName name) (replicate width '-') text | (name, text) <- reprs]
 	where
 		reprs = representations ldef
 		fmtName name = justifyRight width ' ' ("-- " ++ name ++ " --")
 
 wordsAcceptance settings langdefs = 
-	map (\var -> variantStr var ++ "\n" ++ intercalate ", " (variantWords var) ++ "\n") variants
+	map formatVariant variants
 	where
 		generated = take (numWordsGen settings) (gen $ alphabet settings)
 		replaceEps = map (\w -> if w == "" then "\\eps" else w)
 
-		variants = 
-			[[if i == ci then Just True else Nothing | i <- [1..length langdefs]] | ci <- [1..length langdefs]]
-			++ [[if i == ci then Just False else Nothing | i <- [1..length langdefs]] | ci <- [1..length langdefs]]
+		allNothing = replicate (length langdefs) Nothing
 
+		-- tail because we don't want to have a list of Nothing's
+		variants = sortBy cmpVariants $ reverse $ tail $ cartesianProduct (length langdefs) [Nothing, Just True, Just False]
 
-		variantStr var = concat [if isNothing v then "" else if fromJust v then " +" ++ name else " -" ++ name | (v, name) <- zip var (map name langdefs)]
+		cmpVariants v1 v2
+			| count Nothing v1 /= count Nothing v2 = count Nothing v2 `compare` count Nothing v1 -- reverse order
+			| allEqual v1 /= allEqual v2 = allEqual v2 `compare` allEqual v1 -- reverse order
+			| count (Just True) v1 /= count (Just True) v2 = count (Just True) v2 `compare` count (Just True) v1 -- reverse order
+			| otherwise = EQ -- don't change order
+
+		variantStr var
+			| allEqual var = (if fromJust (head var) then "+" else "-") ++ intercalate ", " (map name langdefs)
+			| otherwise =  tail $ concat [if isNothing v then "" else if fromJust v then " +" ++ name else " -" ++ name | (v, name) <- zip var (map name langdefs)]
 		variantCond var w = and [if v then accepted ldef w else not (accepted ldef w) | (Just v, ldef) <- zip var langdefs]
-
 		variantWords var = replaceEps $ filter (variantCond var) generated
+
+		formatVariant var = printf "-- [ %s ] %d / %d --\n%s\n" str (length varWords) (numWordsGen settings) wordsStr
+			where
+				str = variantStr var
+				varWords = variantWords var
+				wordsStr = if null varWords then "None" else intercalate ", " varWords
 
 
 main = do
@@ -64,5 +77,4 @@ main = do
 	outputLine $ justifyCenter width '=' " Words acceptance results "
 	outputLine $ justifyCenter width '=' (printf " Alphabet: {%s} " (intersperse ',' (alphabet settings)))
 	outputLine ""
-	print $ wordsAcceptance settings langdefs
-	outputLine $ intercalate "\n" $ wordsAcceptance settings langdefs
+	outputLine $ unlines $ wordsAcceptance settings langdefs
