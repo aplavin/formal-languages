@@ -69,6 +69,8 @@ main = do
 	(settings, langdefs) <- parseFile input
 	createOutput
 
+	print langdefs
+
 	outputLine $ justifyCenter width '=' " Representations "
 	outputLine $ replicate width '='
 	outputLine ""

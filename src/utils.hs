@@ -5,6 +5,20 @@
 module Utils where
 
 import Data.List
+import Data.List.Split
+
+splitOn x = split (dropBlanks . dropDelims $ oneOf [x])
+splitOneOf xs = split (dropBlanks . dropDelims $ oneOf xs)
+splitWhen f = split (dropBlanks . dropDelims $ whenElt f)
+
+stripOneOf xs = lstripOneOf xs . rstripOneOf xs
+lstripOneOf xs = dropWhile (`elem` xs)
+rstripOneOf xs = reverse . lstripOneOf xs . reverse
+
+
+strip = lstrip . rstrip
+lstrip = dropWhile (`elem` " \t")
+rstrip = reverse . lstrip . reverse
 
 thrd (_, _, a) = a
 

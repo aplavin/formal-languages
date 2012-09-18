@@ -1,6 +1,6 @@
 check 1000 words in alphabet {0, 1}
 
-Language definitions:
+# Language definitions:
 
 
 
@@ -11,3 +11,5 @@ A
 
 
 
+R
+^01*$

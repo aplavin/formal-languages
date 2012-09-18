@@ -33,6 +33,25 @@ accepted r@(RegExp{}) w = w =~ value r :: Bool
 representations a@(Automaton{}) = zip ["Haskell definition", "Table", "LaTeX table"] (map ($ a) [toHaskellDef, toTable, toLatexTable])
 representations r@(RegExp{}) = [("Haskell regexp", value r)]
 
+fromStrings strs
+	| "A" `isPrefixOf` name = Automaton{
+		 name = name
+		,a_alphabet = filter (/= 'e') $ map head $ splitOneOf " \t" . head . tail $ strs
+		,states = states
+		,startStates = startStates
+		,acceptStates = acceptStates
+		,delta = []
+	}
+	| "R" `isPrefixOf` name = RegExp{
+		 name=name
+		,value=head.tail $ strs
+	}
+	where
+		name = (head strs =~ "[a-zA-Z0-9_]+")
+		states = map (stripOneOf " ><F" . head . splitOn '\t') $ drop 2 strs
+		startStates = map (stripOneOf " ><F") . filter (">" `isInfixOf`) . map (head . splitOn '\t') $ drop 2 strs
+		acceptStates = map (stripOneOf " ><F") . filter ("F" `isInfixOf`) . map (head . splitOn '\t') $ drop 2 strs
+
 isDFA a = all (\(_, c, states) -> isJust c && length states <= 1) (delta a) && (length (startStates a) == 1)
 
 getDFA a = if not (isDFA a) then error "Automaton is not DFA" else DFA.DFA
