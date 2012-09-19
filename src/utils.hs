@@ -6,6 +6,7 @@ module Utils where
 
 import Data.List
 import Data.List.Split
+import Control.Monad
 
 splitOn x = split (dropBlanks . dropDelims $ oneOf [x])
 splitOneOf xs = split (dropBlanks . dropDelims $ oneOf xs)
@@ -22,7 +23,7 @@ rstrip = reverse . lstrip . reverse
 
 thrd (_, _, a) = a
 
-cartesianProduct cnt xs = sequence (replicate cnt xs)
+cartesianProduct cnt xs = replicateM cnt xs
 
 count x xs = length $ filter (==x) xs
 

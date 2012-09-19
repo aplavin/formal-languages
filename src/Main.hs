@@ -23,7 +23,7 @@ gen alphabet = [genNth alphabet len n | len <- [0..], n <- [0..length alphabet ^
 
 input = "input.txt"
 output = "result.txt"
-width = 100
+width = 80
 
 createOutput = writeFile output ""
 
@@ -68,8 +68,6 @@ wordsAcceptance settings langdefs =
 main = do
 	(settings, langdefs) <- parseFile input
 	createOutput
-
-	print langdefs
 
 	outputLine $ justifyCenter width '=' " Representations "
 	outputLine $ replicate width '='

@@ -1,10 +1,12 @@
 module LangDefs where
 
-import Text.Regex.Posix
+import qualified Text.Regex.PCRE as PCRE
+import qualified Text.Regex.Posix as Posix
 import Text.Printf
 import Data.Maybe
 import Data.List
 import Text.Groom
+import Data.Char
 import Utils
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -22,35 +24,48 @@ data LangDef = Automaton {
  | RegExp {
 	 name :: String
 	,value :: String
+	,mode :: RegExpMode
 }
  deriving (Show, Eq)
+
+data RegExpMode = PCRE | Posix deriving (Show, Eq)
 
 accepted a@(Automaton{}) w
 	| isDFA a = DFA.accept w (getDFA a)
 	| otherwise = NFA.accept w (getNFA a)
-accepted r@(RegExp{}) w = w =~ value r :: Bool
+accepted r@(RegExp{mode = PCRE}) w = w PCRE.=~ value r :: Bool
+accepted r@(RegExp{mode = Posix}) w = w Posix.=~ value r :: Bool
 
 representations a@(Automaton{}) = zip ["Haskell definition", "Table", "LaTeX table"] (map ($ a) [toHaskellDef, toTable, toLatexTable])
-representations r@(RegExp{}) = [("Haskell regexp", value r)]
+representations r@(RegExp{}) = zip ["Haskell definition", "Haskell regexp"] (map ($ r) [toHaskellDef, value])
 
 fromStrings strs
 	| "A" `isPrefixOf` name = Automaton{
 		 name = name
-		,a_alphabet = filter (/= 'e') $ map head $ splitOneOf " \t" . head . tail $ strs
+		,a_alphabet = alphabet
 		,states = states
 		,startStates = startStates
 		,acceptStates = acceptStates
-		,delta = []
+		,delta = delta
 	}
 	| "R" `isPrefixOf` name = RegExp{
 		 name=name
+		,mode=if "PCRE" `isSuffixOf` (map toUpper name) then PCRE else Posix
 		,value=head.tail $ strs
 	}
 	where
-		name = (head strs =~ "[a-zA-Z0-9_]+")
-		states = map (stripOneOf " ><F" . head . splitOn '\t') $ drop 2 strs
+		name = head strs PCRE.=~ "\\w+"
+
+		alphabet = filter (/= 'e') $ map head $ splitOneOf " \t" . head . tail $ strs
+		stateLines = map (\line -> stripOneOf " ><F" (head (lineBlocks line)) : tail (lineBlocks line)) $ drop 2 strs where lineBlocks = splitOn '\t'
+		states = map head stateLines
 		startStates = map (stripOneOf " ><F") . filter (">" `isInfixOf`) . map (head . splitOn '\t') $ drop 2 strs
 		acceptStates = map (stripOneOf " ><F") . filter ("F" `isInfixOf`) . map (head . splitOn '\t') $ drop 2 strs
+		delta = [(st, ch', states') |
+			 (st : stLine) <- stateLines
+			,(ch, states') <- zip alphabet (map (splitOn ',') stLine)
+			,let ch' = if ch /= 'e' then Just ch else Nothing
+			,states' /= ["-"]]
 
 isDFA a = all (\(_, c, states) -> isJust c && length states <= 1) (delta a) && (length (startStates a) == 1)
 
@@ -69,9 +84,10 @@ getNFA a = NFA.NFA
     , NFA.acceptStates = Set.fromList (acceptStates a) }
 	
 -- | Get Haskell code definition for this automaton
-toHaskellDef a
+toHaskellDef a@(Automaton{})
 	| isDFA a = groom (getDFA a)
 	| otherwise = groom (getNFA a)
+toHaskellDef r@(RegExp{}) = groom r
 	
 -- | Get table definition for this automaton, format similar to input
 toTable a = "\t" ++ intersperse '\t' alphabet' ++ "\n" ++ intercalate "\n" statesS

@@ -54,5 +54,5 @@ executable Finite-Automata
   other-modules:       LangDefs DFA NFA FileParser Utils Grammar
   
   -- Other library packages from which modules are imported.
-  build-depends:       base ==4.5.*, containers, groom, split, parsec, tuple, MissingH, regex-posix
+  build-depends:       base ==4.5.*, containers, groom, split, tuple, MissingH, regex-pcre-builtin, regex-posix
   

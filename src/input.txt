@@ -1,15 +1,11 @@
-check 1000 words in alphabet {0, 1}
+check 5000 words in alphabet {a, b, c}
 
 # Language definitions:
 
 
 
-A
-	0	1
->0	1	0
-1F	1	1
-
-
-
 R
-^01*$
+^(a*b*c)*$
+
+R_PCRE
+^(a*b*c)*$
