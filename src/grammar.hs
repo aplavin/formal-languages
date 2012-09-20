@@ -1,38 +1,63 @@
-module Grammar where
+module Grammar(Symbol, CFG, removeEmpty, isAccepted) where
 
 import Data.List
+import Data.List.Utils
 import Data.Maybe
+import Debug.Observe
+import Debug.Trace
+import Control.DeepSeq
+import Utils
 
---data NonTerm = S | Q0 | Q1 | Q2 | Q3 deriving (Show, Eq)
---data Term = EPS | T0 | T1 deriving (Show, Eq)
-data Item = S | Q0 | Q1 | Q2 | Q3 | EPS | T0 | T1 deriving (Show, Eq)
+class (Show s, Eq s) => Symbol s where
+	isT :: s -> Bool
+	isN :: s -> Bool
+	isT = not . isN
+	isN = not . isT
 
-terms = [
-	 (EPS, "")
-	,(T0, "0")
-	,(T1, "1")
-	]
+instance Symbol Char where
+	isN c = 'A' <= c && c <= 'Z'
 
-tts t = s where (_, s) = fromJust $ find (\(t', _) -> t' == t) terms
+type CFG s = (s, [(s, [s])])
 
-rules = [
-	 (S, [Q2])
-	,(Q0, [EPS])
-	,(Q0, [Q0, T0])
-	,(Q0, [Q1, T1])
-	,(Q0, [Q3, T0])
-	,(Q1, [Q0, T1])
-	,(Q1, [Q2, T0])
-	,(Q2, [Q1, T0])
-	,(Q2, [Q2, T1])
-	,(Q1, [Q3, T1])
-	,(Q3, [Q0, T0])
-	,(Q3, [Q3, T0])
-	]
+start :: CFG s -> s
+start = fst
 
-maxsteps = 10
+prods :: CFG s -> [(s, [s])]
+prods = snd
 
-check terms rules n nonterm word
-	| n <= 0 = False
-	| maybe False (\(t, _) -> (nonterm, [t]) `elem` rules) (find (\(_, s) -> s == word) terms) = True
-	| otherwise = or [check terms rules (n-1) nonterm' w | (nt, repl) <- filter (\(f, _) -> f == nonterm) rules, length repl == 1 || (tts $ last repl) `isSuffixOf` word, let w = if length repl == 1 then word else init word, let nonterm' = head repl]
+terminals :: Symbol s => CFG s -> [s]
+terminals g = foldl union [] (map (filter isT.snd) $ prods g)
+
+nonterminals :: Symbol s => CFG s -> [s]
+nonterminals = nub . map fst . prods
+
+symbols :: Symbol s => CFG s -> [s]
+symbols g = terminals g `union` nonterminals g
+
+removeEmpty :: Symbol s => CFG s -> CFG s
+removeEmpty g = (start g, [(lhs, rhs') | (lhs, rhs) <- noEmptyProds, rhs' <- allReplaces rhs])
+	where
+		emptyProds = filter (null.snd) (prods g)
+		noEmptyProds = filter (not.null.snd) (prods g)
+
+		allReplaces prod
+			| null eProds = [prod]
+			| otherwise = prod : concat [allReplaces prod' | eProd <- eProds, let prod' = replaceOnce [eProd] [] prod]
+			where eProds = filter (`elem` prod) $ map fst emptyProds
+
+isAccepted :: Symbol s => CFG s -> [s] -> Bool
+isAccepted g w = isAccepted' g w []
+
+isAccepted' :: Symbol s => CFG s -> [s] -> [s] -> Bool
+isAccepted' g w stack
+	| null w = [start g] `elem` stacks'
+	| otherwise = or [isAccepted' g (tail w) st | st <- stacks']
+	where
+		stack' = if null w then stack else head w : stack
+		stacks' = replaceProds stack'
+
+		prodsOnTop st = filter (\prod -> reverse (snd prod) `isPrefixOf` st) (prods g)
+		replaceProds st
+			| null prods = [st]
+			| otherwise = st : concat [replaceProds (fst prod : drop (length $ snd prod) st) | prod <- prods]
+			where prods = prodsOnTop st

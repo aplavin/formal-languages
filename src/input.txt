@@ -1,11 +1,7 @@
-check 5000 words in alphabet {a, b, c}
+check 100 words in alphabet {a, b}
 
 # Language definitions:
 
-
-
-R
-^(a*b*c)*$
-
-R_PCRE
-^(a*b*c)*$
+Gram:
+S -> aSb
+S -> e

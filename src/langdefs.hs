@@ -8,6 +8,7 @@ import Data.List
 import Text.Groom
 import Data.Char
 import Utils
+import Grammar
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified DFA
@@ -26,6 +27,11 @@ data LangDef = Automaton {
 	,value :: String
 	,mode :: RegExpMode
 }
+ | Grammar {
+ 	 name :: String
+ 	,start :: [Char]
+ 	,productions :: [([Char], [Char])]
+}
  deriving (Show, Eq)
 
 data RegExpMode = PCRE | Posix deriving (Show, Eq)
@@ -33,11 +39,17 @@ data RegExpMode = PCRE | Posix deriving (Show, Eq)
 accepted a@(Automaton{}) w
 	| isDFA a = DFA.accept w (getDFA a)
 	| otherwise = NFA.accept w (getNFA a)
+
 accepted r@(RegExp{mode = PCRE}) w = w PCRE.=~ value r :: Bool
 accepted r@(RegExp{mode = Posix}) w = w Posix.=~ value r :: Bool
 
+accepted g@(Grammar{}) w
+	| isCFG g = isAccepted (removeEmpty (head $ start g, [(from, to) | ([from], to) <- productions g])) w
+	| otherwise = error "Not context-free"
+
 representations a@(Automaton{}) = zip ["Haskell definition", "Table", "LaTeX table"] (map ($ a) [toHaskellDef, toTable, toLatexTable])
 representations r@(RegExp{}) = zip ["Haskell definition", "Haskell regexp"] (map ($ r) [toHaskellDef, value])
+representations g@(Grammar{}) = zip ["Haskell definition"] (map ($ g) [toHaskellDef])
 
 fromStrings strs
 	| "A" `isPrefixOf` name = Automaton{
@@ -53,6 +65,11 @@ fromStrings strs
 		,mode=if "PCRE" `isSuffixOf` (map toUpper name) then PCRE else Posix
 		,value=head.tail $ strs
 	}
+	| "G" `isPrefixOf` name = Grammar{
+		 name=name
+		,start=fst.head $ productions
+		,productions=productions
+	}
 	where
 		name = head strs PCRE.=~ "\\w+"
 
@@ -66,6 +83,8 @@ fromStrings strs
 			,(ch, states') <- zip alphabet (map (splitOn ',') stLine)
 			,let ch' = if ch /= 'e' then Just ch else Nothing
 			,states' /= ["-"]]
+
+		productions = [(lhs, rhs) | s <- tail strs, let [lhs, rhs'] = map strip $ splitOnList "->" s, let rhs = if rhs' == "e" then "" else rhs']
 
 isDFA a = all (\(_, c, states) -> isJust c && length states <= 1) (delta a) && (length (startStates a) == 1)
 
@@ -88,6 +107,7 @@ toHaskellDef a@(Automaton{})
 	| isDFA a = groom (getDFA a)
 	| otherwise = groom (getNFA a)
 toHaskellDef r@(RegExp{}) = groom r
+toHaskellDef g@(Grammar{}) = groom (removeEmpty (head $ start g, [(from, to) | ([from], to) <- productions g])) --g
 	
 -- | Get table definition for this automaton, format similar to input
 toTable a = "\t" ++ intersperse '\t' alphabet' ++ "\n" ++ intercalate "\n" statesS
@@ -128,3 +148,5 @@ toLatexTable a = unlines [
 			]
 		isStart st = st `elem` startStates a
 		isAccept st = st `elem` acceptStates a
+
+isCFG g = all (\(from, to) -> length from == 1) (productions g)

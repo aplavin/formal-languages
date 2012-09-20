@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.
-name:                Finite-Automata
+name:                Formal-Language
 
 -- The package version.  See the Haskell package versioning policy (PVP) 
 -- for standards guiding when and how versions should be incremented.
@@ -13,13 +13,13 @@ name:                Finite-Automata
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis:            Finite automata modelling software
+synopsis:            Formal language modeling
 
 -- A longer description of the package.
 -- description:         
 
 -- URL for the project homepage or repository.
-homepage:            https://bitbucket.org/chersanya/fas
+homepage:            https://bitbucket.org/chersanya/formal-languages
 
 -- The license under which the package is released.
 license:             GPL-3
@@ -45,7 +45,7 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 
-executable Finite-Automata
+executable Formal-Languages
   hs-source-dirs: src
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
@@ -54,5 +54,5 @@ executable Finite-Automata
   other-modules:       LangDefs DFA NFA FileParser Utils Grammar
   
   -- Other library packages from which modules are imported.
-  build-depends:       base ==4.5.*, containers, groom, split, tuple, MissingH, regex-pcre-builtin, regex-posix
+  build-depends:       base ==4.5.*, containers, groom, split, tuple, MissingH, regex-pcre-builtin, regex-posix, GHood, deepseq
   

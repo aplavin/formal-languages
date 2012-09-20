@@ -6,16 +6,23 @@ module Utils where
 
 import Data.List
 import Data.List.Split
+import Data.List.Utils hiding (split)
+import Debug.Trace
 import Control.Monad
 
 splitOn x = split (dropBlanks . dropDelims $ oneOf [x])
+splitOnList xs = split (dropBlanks . dropDelims $ onSublist xs)
 splitOneOf xs = split (dropBlanks . dropDelims $ oneOf xs)
 splitWhen f = split (dropBlanks . dropDelims $ whenElt f)
+
+replaceOnce _ _ [] = []
+replaceOnce from to xs
+	| from `isPrefixOf` xs = to ++ drop (length from) xs
+	| otherwise = head xs : replaceOnce from to (tail xs)
 
 stripOneOf xs = lstripOneOf xs . rstripOneOf xs
 lstripOneOf xs = dropWhile (`elem` xs)
 rstripOneOf xs = reverse . lstripOneOf xs . reverse
-
 
 strip = lstrip . rstrip
 lstrip = dropWhile (`elem` " \t")
