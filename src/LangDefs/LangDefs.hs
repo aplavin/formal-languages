@@ -21,6 +21,7 @@ data LangDef = Automaton {
 	,startStates :: [String]
 	,acceptStates :: [String]
 	,delta :: [(String, Maybe Char, [String])]
+	,fa :: Maybe (Either (DFA.DFA String Char) (NFA.NFA String Char))
 }
  | RegExp {
 	 name :: String
@@ -59,6 +60,7 @@ fromStrings strs
 		,startStates = startStates
 		,acceptStates = acceptStates
 		,delta = delta
+		,fa = Nothing --if isDFA then getDFA a else getNFA a
 	}
 	| "R" `isPrefixOf` name = RegExp{
 		 name=name

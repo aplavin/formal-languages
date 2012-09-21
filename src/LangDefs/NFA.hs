@@ -20,7 +20,7 @@ data NFA s a = NFA
     , delta :: Delta s a
     , startState :: s
     , acceptStates :: Set.Set s
-    } deriving Show
+    } deriving (Show, Eq)
 
 move :: (Ord s, Ord a) => s -> Maybe a -> NFA s a -> Set.Set s
 move state alpha nfa =

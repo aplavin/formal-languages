@@ -18,7 +18,7 @@ data DFA s a = DFA
     , delta :: Delta s a
     , startState :: s
     , acceptStates :: Set.Set s
-    } deriving (Show)
+    } deriving (Show, Eq)
 
 trans :: (Ord s, Ord a) => s -> a -> DFA s a -> Maybe s
 trans state alpha dfa = Map.lookup (state, alpha) $ delta dfa
