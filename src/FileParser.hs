@@ -3,7 +3,7 @@ module FileParser(parseFile, Settings(..)) where
 import Data.List
 import Data.Ord
 import Text.Regex.Posix
-import LangDefs
+import LangDefs.LangDefs
 import Utils
 
 -- | Settings for generating and checking words

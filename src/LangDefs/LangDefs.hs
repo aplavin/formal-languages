@@ -1,4 +1,4 @@
-module LangDefs where
+module LangDefs.LangDefs where
 
 import qualified Text.Regex.PCRE as PCRE
 import qualified Text.Regex.Posix as Posix
@@ -8,11 +8,11 @@ import Data.List
 import Text.Groom
 import Data.Char
 import Utils
-import Grammar
+import LangDefs.Grammar
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import qualified DFA
-import qualified NFA
+import qualified LangDefs.DFA as DFA
+import qualified LangDefs.NFA as NFA
 
 data LangDef = Automaton {
 	 name :: String

@@ -1,4 +1,4 @@
-module NFA
+module LangDefs.NFA
 ( NFA (..)
 , trans
 , run
@@ -10,7 +10,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Maybe
 
-import qualified DFA
+import qualified LangDefs.DFA as DFA
 
 type Delta s a = Map.Map (s, Maybe a) (Set.Set s)
 

@@ -1,4 +1,4 @@
-module Grammar(Symbol, CFG, removeEmpty, isAccepted) where
+module LangDefs.Grammar(Symbol, CFG, removeEmpty, isAccepted) where
 
 import Data.List
 import Data.List.Utils

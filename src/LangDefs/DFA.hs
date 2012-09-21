@@ -1,4 +1,4 @@
-module DFA
+module LangDefs.DFA
 ( DFA (..)
 , trans
 , run

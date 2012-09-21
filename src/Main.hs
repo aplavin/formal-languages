@@ -6,14 +6,14 @@ import Data.Maybe
 import Data.List.Utils
 import Data.Tuple.Curry
 import Control.Monad
-import LangDefs
+import LangDefs.LangDefs
 import FileParser
-import Grammar
+import LangDefs.Grammar
 import Utils
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import qualified DFA
-import qualified NFA
+import qualified LangDefs.DFA as DFA
+import qualified LangDefs.NFA as NFA
 
 genNth _ 0 _ = ""
 genNth alphabet len n = genNth alphabet (len-1) q ++ [alphabet !! r]
