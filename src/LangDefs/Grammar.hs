@@ -1,12 +1,34 @@
-module LangDefs.Grammar(Symbol, CFG, removeEmpty, isAccepted) where
+module LangDefs.Grammar where
 
 import Data.List
 import Data.List.Utils
 import Data.Maybe
-import Debug.Observe
-import Debug.Trace
-import Control.DeepSeq
 import Utils
+import Text.Groom
+
+data Grammar = Grammar {
+ 	 name :: String
+ 	,start1 :: [Char]
+ 	,productions :: [([Char], [Char])]
+}
+
+accepted g w
+	| isCFG g = isAccepted (removeEmpty (head $ start1 g, [(from, to) | ([from], to) <- productions g])) w
+	| otherwise = error "Not context-free"
+
+isCFG g = all (\(from, to) -> length from == 1) (productions g)
+
+representations g = zip ["Haskell definition"] (map ($ g) [toHaskellDef])
+
+toHaskellDef g@(Grammar{}) = groom (removeEmpty (head $ start1 g, [(from, to) | ([from], to) <- productions g]))
+
+fromNameLines name strs = Grammar{
+		 name=name
+		,start1=fst.head $ productions
+		,productions=productions
+	}
+	where 
+		productions = [(lhs, rhs) | s <- strs, let [lhs, rhs'] = map strip $ splitOnList "->" s, let rhs = if rhs' == "e" then "" else rhs']
 
 class (Show s, Eq s) => Symbol s where
 	isT :: s -> Bool

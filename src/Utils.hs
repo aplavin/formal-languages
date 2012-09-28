@@ -10,6 +10,8 @@ import Data.List.Utils hiding (split)
 import Debug.Trace
 import Control.Monad
 
+traceV s v = trace (s ++ ": " ++ show v) v
+
 splitOn x = split (dropBlanks . dropDelims $ oneOf [x])
 splitOnList xs = split (dropBlanks . dropDelims $ onSublist xs)
 splitOneOf xs = split (dropBlanks . dropDelims $ oneOf xs)

@@ -1,7 +1,6 @@
 module FileParser(parseFile, Settings(..)) where
 
 import Data.List
-import Data.Ord
 import Text.Regex.Posix
 import LangDefs.LangDefs
 import Utils
@@ -13,14 +12,14 @@ data Settings = Settings {
 } deriving (Show)
 
 -- | Parse specified file
-parseFile :: FilePath -> IO (Settings, [LangDef])
+parseFile :: FilePath -> IO (Settings, [LangDefDict])
 parseFile file = do
 	content <- readFile file
 	let fileLines = map strip $ lines content
 	let blocks = splitBlocks fileLines
 
 	let settings = parseSettings $ head blocks
-	let langdefs = map fromStrings $ tail blocks
+	let langdefs = map fromLines $ tail blocks
 
 	return (settings, langdefs)
 

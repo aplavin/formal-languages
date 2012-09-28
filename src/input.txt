@@ -1,7 +1,8 @@
-check 100 words in alphabet {a, b}
+check 1000 words in alphabet {a, b}
 
 # Language definitions:
 
-Gram:
-S -> aSb
-S -> e
+A:
+	e	a
+>1	2	2
+2F	1	-
