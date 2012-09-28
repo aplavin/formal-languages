@@ -13,9 +13,6 @@ class LangDef d where
 	_representations :: d -> [(String, String)]
 	_fromNameLines :: String -> [String] -> d
 
-instance LangDef Grammar.Grammar
-instance LangDef Regexp.Regexp
-
 data LangDefDict = LangDefDict {
 	 name :: String
 	,accepted :: String -> Bool

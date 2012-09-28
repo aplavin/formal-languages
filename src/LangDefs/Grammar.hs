@@ -1,5 +1,6 @@
 module LangDefs.Grammar where
 
+import {-# SOURCE #-} LangDefs.LangDefs (LangDef (..))
 import Data.List
 import Data.List.Utils
 import Data.Maybe
@@ -11,6 +12,12 @@ data Grammar = Grammar {
  	,start1 :: [Char]
  	,productions :: [([Char], [Char])]
 }
+
+instance LangDef Grammar where
+	_name = name
+	_accepted = accepted
+	_representations = representations
+	_fromNameLines = fromNameLines
 
 accepted g w
 	| isCFG g = isAccepted (removeEmpty (head $ start1 g, [(from, to) | ([from], to) <- productions g])) w

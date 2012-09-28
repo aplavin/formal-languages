@@ -29,10 +29,10 @@ langDefRepr ldef = justifyCenter width '-' (" " ++ name ldef ++ " ") ++ "\n" ++ 
 wordsAcceptance settings langdefs = 
 	map formatVariant variants
 	where
-		generated = take (numWordsGen settings) (gen $ alphabet settings)
-		replaceEps = map (\w -> if w == "" then "\\eps" else w)
+		generatedWords = take (numWordsGen settings) (gen $ alphabet settings)
+		wordsWithFlags = [(w, flags) | w <- generatedWords, let flags = map (\ld -> accepted ld w) langdefs]
 
-		allNothing = replicate (length langdefs) Nothing
+		replaceEps = map (\w -> if w == "" then "\\eps" else w)
 
 		-- tail because we don't want to have a list of Nothing's
 		variants = sortBy cmpVariants $ reverse $ tail $ cartesianProduct (length langdefs) [Nothing, Just True, Just False]
@@ -46,8 +46,9 @@ wordsAcceptance settings langdefs =
 		variantStr var
 			| allEqual var = (if fromJust (head var) then "+" else "-") ++ intercalate ", " (map name langdefs)
 			| otherwise =  tail $ concat [if isNothing v then "" else if fromJust v then " +" ++ name else " -" ++ name | (v, name) <- zip var (map name langdefs)]
-		variantCond var w = and [if v then accepted ldef w else not (accepted ldef w) | (Just v, ldef) <- zip var langdefs]
-		variantWords var = replaceEps $ filter (variantCond var) generated
+
+		variantCond var (_, flags) = and [if v then f else not f | (Just v, f) <- zip var flags]
+		variantWords var = replaceEps $ map fst $ filter (variantCond var) wordsWithFlags
 
 		formatVariant var = printf "-- [ %s ] %d / %d --\n%s\n" str (length varWords) (numWordsGen settings) wordsStr
 			where
