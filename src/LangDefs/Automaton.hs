@@ -1,4 +1,4 @@
-module LangDefs.Automaton where
+module LangDefs.Automaton (Automaton (..)) where
 
 import {-# SOURCE #-} LangDefs.LangDefs (LangDef (..))
 import qualified LangDefs.DFA as DFA

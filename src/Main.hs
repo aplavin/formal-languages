@@ -1,3 +1,6 @@
+{-# LANGUAGE BangPatterns #-}
+module Main(main) where
+
 import System.IO
 import Text.Printf
 import Data.List
@@ -7,10 +10,14 @@ import FileParser
 import Utils
 
 genNth _ 0 _ = ""
-genNth alphabet len n = genNth alphabet (len-1) q ++ [alphabet !! r]
+genNth alphabet len n = (alphabet !! r) : genNth alphabet (len-1) q
 	where (q, r) = n `quotRem` length alphabet
 	
-gen alphabet = [genNth alphabet len n | len <- [0..], n <- [0..length alphabet ^ len - 1]]
+gen' alphabet 0 = [""]
+gen' alphabet len = [c:s | c <- alphabet, s <- gen' alphabet (len - 1)]
+	
+gen alphabet = concat [gen' alphabet len | len <- [0..]]
+-- gen alphabet = [genNth alphabet len n | len <- [0..], n <- [0..length alphabet ^ len - 1]]
 
 input = "input.txt"
 output = "result.txt"
@@ -18,7 +25,9 @@ width = 80
 
 createOutput = writeFile output ""
 
-outputLine line = appendFile output (line ++ "\n")
+outputLine line = do
+	appendFile output line
+	appendFile output "\n"
 
 -- | Representation of LangDef in pretty format, with headers and so on
 langDefRepr ldef = justifyCenter width '-' (" " ++ name ldef ++ " ") ++ "\n" ++ intercalate "\n" [printf "%s\n%s\n%s" (fmtName name) (replicate width '-') text | (name, text) <- reprs]
@@ -41,7 +50,7 @@ wordsAcceptance settings langdefs =
 			| count Nothing v1 /= count Nothing v2 = count Nothing v2 `compare` count Nothing v1 -- reverse order
 			| allEqual v1 /= allEqual v2 = allEqual v2 `compare` allEqual v1 -- reverse order
 			| count (Just True) v1 /= count (Just True) v2 = count (Just True) v2 `compare` count (Just True) v1 -- reverse order
-			| otherwise = EQ -- don't change order
+			| otherwise = EQ
 
 		variantStr var
 			| allEqual var = (if fromJust (head var) then "+" else "-") ++ intercalate ", " (map name langdefs)

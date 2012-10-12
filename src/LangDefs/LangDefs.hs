@@ -1,4 +1,4 @@
-module LangDefs.LangDefs where
+module LangDefs.LangDefs (LangDef(..), LangDefDict(..), fromLines) where
 
 import Text.Regex.Posix
 import Utils
@@ -24,9 +24,9 @@ buildDict d = LangDefDict { name = _name d, accepted = _accepted d, representati
 
 fromLines :: [String] -> LangDefDict
 fromLines (sName: strs) = case head name of
-			'A' -> buildDict (Automaton.fromNameLines name strs)
-			'R' -> buildDict (Regexp.fromNameLines name strs)
-			'G' -> buildDict (Grammar.fromNameLines name strs)
+			'A' -> buildDict (_fromNameLines name strs :: Automaton.Automaton)
+			'R' -> buildDict (_fromNameLines name strs :: Regexp.Regexp)
+			'G' -> buildDict (_fromNameLines name strs :: Grammar.Grammar)
 	where
 		name = sName =~ "[A-Za-z0-9_-]+"
 

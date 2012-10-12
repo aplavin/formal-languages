@@ -1,10 +1,4 @@
-module LangDefs.NFA
-( NFA (..)
-, trans
-, run
-, accept
-, toDFA
-) where
+module LangDefs.NFA(NFA (..), accept, toDFA) where
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set

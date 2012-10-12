@@ -7,9 +7,10 @@ module Utils where
 import Data.List
 import Data.List.Split
 import Data.List.Utils hiding (split)
-import Debug.Trace
+import qualified Debug.Trace as DT
 import Control.Monad
 
+trace = DT.trace
 traceV s v = trace (s ++ ": " ++ show v) v
 
 splitOn x = split (dropBlanks . dropDelims $ oneOf [x])

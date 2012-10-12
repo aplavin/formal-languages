@@ -1,4 +1,6 @@
-module LangDefs.Grammar where
+{-# LANGUAGE BangPatterns #-}
+
+module LangDefs.Grammar (Grammar) where
 
 import {-# SOURCE #-} LangDefs.LangDefs (LangDef (..))
 import Data.List
@@ -29,7 +31,7 @@ fromNameLines :: String -> [String] -> Grammar
 fromNameLines name strs = if isCFG then Grammar{
 		 name=name
 		,start=fst.head $ productions
-		,productions = removeEmpty productions
+		,productions = removeVoid . removeEmpty $ productions
 	} else error "Not context-free grammar"
 	where
 		productions :: [Production]
@@ -53,8 +55,15 @@ nonterminals = nub . map fst . productions
 symbols :: Grammar -> [Char]
 symbols g = terminals g `union` nonterminals g
 
+removeVoid :: [Production] -> [Production]
+removeVoid prods = filter (\(lhs, rhs) -> [lhs] /= rhs) prods
+
+-- TODO: run several times (until changing stops) or prove that it's unnecessary
 removeEmpty :: [Production] -> [Production]
-removeEmpty prods = [(lhs, rhs') | (lhs, rhs) <- noEmptyProds, rhs' <- allReplaces rhs]
+removeEmpty prods = filter (not.null.snd) $ removeEmpty' prods
+
+removeEmpty' :: [Production] -> [Production]
+removeEmpty' prods = nub [(lhs, rhs') | (lhs, rhs) <- noEmptyProds, rhs' <- allReplaces rhs]
 	where
 		emptyProds = filter (null.snd) prods
 		noEmptyProds = filter (not.null.snd) prods

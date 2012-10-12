@@ -44,8 +44,8 @@ build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.8
 
-
 executable Formal-Languages
+
   hs-source-dirs: src
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
@@ -54,5 +54,5 @@ executable Formal-Languages
   other-modules:       FileParser Utils LangDefs.LangDefs LangDefs.DFA LangDefs.NFA LangDefs.Grammar
   
   -- Other library packages from which modules are imported.
-  build-depends:       base ==4.5.*, containers, groom, split, tuple, MissingH, regex-pcre-builtin, regex-posix, GHood, deepseq
+  build-depends:       base ==4.5.*, containers, groom, split, MissingH, regex-pcre-builtin, regex-posix, deepseq
   

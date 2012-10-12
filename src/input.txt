@@ -1,15 +1,18 @@
-check 5000 words in alphabet {a, b}
+check 100 words in alphabet {a,b}
 
 # Language definitions:
 
-A:
-	e	a
->1	2	2
-2F	1	-
-
 G:
-S -> aSb
 S -> e
+S -> aSb
+S -> bSa
+S -> SS
 
-R:
-^bab*$
+G1:
+S -> e
+S -> abS
+S -> aSb
+S -> baS
+S -> bSa
+S -> Sab
+S -> Sba

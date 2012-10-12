@@ -31,4 +31,4 @@ parseSettings :: [String] -> Settings
 parseSettings strings = Settings{numWordsGen = numWords, alphabet = alphabet}
 	where
 		numWords = read (head strings =~ " [0-9]+ ")
-		alphabet = map head $ splitOneOf ", " $ last.head $ (head strings =~ "{(.*)}" :: [[String]])
+		alphabet = map head $ splitOneOf ", " $ last.head $ (head strings =~ "\\{(.*)\\}" :: [[String]])

@@ -1,4 +1,4 @@
-module LangDefs.Regexp where
+module LangDefs.Regexp(Regexp) where
 
 import {-# SOURCE #-} LangDefs.LangDefs (LangDef (..))
 import qualified Text.Regex.PCRE as PCRE
@@ -8,7 +8,7 @@ import Utils
 import Data.List
 import Data.Char
 
-data Regexp = RegExp {
+data Regexp = Regexp {
 	 name :: String
 	,value :: String
 	,mode :: RegExpMode
@@ -27,7 +27,7 @@ accepted r w = w =~ value r :: Bool
 
 representations r = zip ["Haskell definition", "Haskell regexp"] (map ($ r) [toHaskellDef, value])
 
-fromNameLines name strs = RegExp{
+fromNameLines name strs = Regexp{
 		 name=name
 		,mode=if "PCRE" `isSuffixOf` (map toUpper name) then PCRE else Posix
 		,value=head strs
